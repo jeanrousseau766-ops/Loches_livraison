@@ -19,6 +19,7 @@ import {
   ApiError,
   currentUser,
   requireUser,
+  requireActiveUser,
   createSession,
   destroySession,
   hashPassword,
@@ -42,6 +43,8 @@ import {
 } from "@/lib/util";
 
 import { DatabaseConfigurationError } from "@/db";
+import { sendAdminMessage, createAdminPoll, closeAdminPoll, markMessageRead, voteInPoll, AUDIENCE_LABELS } from "@/lib/community";
+import type { Audience } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
           .values({ pseudo, passwordHash: hashPassword(password), role: "client", displayName: pseudo, createdAt: now })
           .returning();
         await createSession(u.id);
-        await notify(u.id, "info", "Bienvenue sur Locho 👋", "Votre compte est créé. Les informations de livraison vous seront demandées à la commande.");
+        await notify(u.id, "info", "Bienvenue sur WawanPost 👋", "Votre compte est créé. Les informations de livraison vous seront demandées à la commande.");
         return Response.json({ ok: true, role: "client" });
       }
 
@@ -377,7 +380,7 @@ export async function POST(req: NextRequest) {
 
       /* ================= LIVREUR ================= */
       case "courierOnline": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         if (me.status !== "active") throw new ApiError(403, "Votre dossier doit être validé avant toute livraison.");
         const cfg = await getConfig();
         if (!serviceOpen(cfg))
@@ -396,13 +399,13 @@ export async function POST(req: NextRequest) {
       }
 
       case "courierOffline": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         await db.update(couriers).set({ online: false, lastSeen: now }).where(eq(couriers.userId, me.id));
         return Response.json({ ok: true });
       }
 
       case "courierZone": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         const cfg = await getConfig();
         const patch: Partial<typeof couriers.$inferInsert> = { lastSeen: now };
         if (p.capacity !== undefined) patch.capacity = clamp(Math.round(n(p.capacity)), 1, cfg.maxCapacity);
@@ -416,7 +419,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "courierPosition": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         const lat = n(p.lat);
         const lng = n(p.lng);
         if (!lat || !lng) throw new ApiError(400, "Position invalide.");
@@ -425,7 +428,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "courierPicked": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         const c = (await db.select().from(couriers).where(eq(couriers.userId, me.id)).limit(1))[0];
         const o = (await db.select().from(orders).where(eq(orders.id, n(p.orderId))).limit(1))[0];
         if (!c || !o || o.courierId !== c.id) throw new ApiError(404, "Mission introuvable.");
@@ -437,7 +440,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "courierDelivered": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         const c = (await db.select().from(couriers).where(eq(couriers.userId, me.id)).limit(1))[0];
         const o = (await db.select().from(orders).where(eq(orders.id, n(p.orderId))).limit(1))[0];
         if (!c || !o || o.courierId !== c.id) throw new ApiError(404, "Mission introuvable.");
@@ -448,7 +451,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "requestPayout": {
-        const me = await requireUser(["livreur"]);
+        const me = await requireActiveUser(["livreur"]);
         const c = (await db.select().from(couriers).where(eq(couriers.userId, me.id)).limit(1))[0];
         if (!c) throw new ApiError(404, "Profil introuvable.");
         const cfg = await getConfig();
@@ -475,7 +478,7 @@ export async function POST(req: NextRequest) {
       case "merchantRefuse":
       case "merchantPreparing":
       case "merchantReady": {
-        const me = await requireUser(["commercant"]);
+        const me = await requireActiveUser(["commercant"]);
         if (me.status !== "active") throw new ApiError(403, "Boutique non validée ou suspendue.");
         const m = (await db.select().from(merchants).where(eq(merchants.userId, me.id)).limit(1))[0];
         const o = (await db.select().from(orders).where(eq(orders.id, n(p.orderId))).limit(1))[0];
@@ -508,7 +511,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "productSave": {
-        const me = await requireUser(["commercant"]);
+        const me = await requireActiveUser(["commercant"]);
         if (me.status !== "active") throw new ApiError(403, "Boutique non validée ou suspendue.");
         const m = (await db.select().from(merchants).where(eq(merchants.userId, me.id)).limit(1))[0];
         if (!m) throw new ApiError(404, "Boutique introuvable.");
@@ -535,7 +538,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "productDelete": {
-        const me = await requireUser(["commercant"]);
+        const me = await requireActiveUser(["commercant"]);
         const m = (await db.select().from(merchants).where(eq(merchants.userId, me.id)).limit(1))[0];
         const prod = (await db.select().from(products).where(eq(products.id, n(p.id))).limit(1))[0];
         if (!m || !prod || prod.merchantId !== m.id) throw new ApiError(404, "Produit introuvable.");
@@ -544,7 +547,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "merchantUpdate": {
-        const me = await requireUser(["commercant"]);
+        const me = await requireActiveUser(["commercant"]);
         if (me.status !== "active") throw new ApiError(403, "Boutique non validée ou suspendue.");
         const openHour = clamp(Math.round(n(p.openHour)), 0, 23);
         const closeHour = clamp(Math.round(n(p.closeHour)), 1, 23);
@@ -567,7 +570,7 @@ export async function POST(req: NextRequest) {
 
       /* ================= ADMIN ================= */
       case "adminDecide": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const target = (await db.select().from(users).where(eq(users.id, n(p.userId))).limit(1))[0];
         if (!target) throw new ApiError(404, "Compte introuvable.");
         const decision = s(p.decision);
@@ -586,13 +589,13 @@ export async function POST(req: NextRequest) {
         await db.update(users).set({ status: d.status, statusNote: note }).where(eq(users.id, target.id));
         if (decision === "disable" || decision === "suspend")
           await db.update(couriers).set({ online: false }).where(eq(couriers.userId, target.id));
-        await notify(target.id, decision === "accept" || decision === "reactivate" ? "ok" : "alerte", d.label, note || "Décision de l'administration Locho.");
+        await notify(target.id, decision === "accept" || decision === "reactivate" ? "ok" : "alerte", d.label, note || "Décision de l'administration WawanPost.");
         await log(me.id, d.label, `${target.role} #${target.id} · ${target.displayName || target.pseudo}`, note || "—");
         return Response.json({ ok: true });
       }
 
       case "adminConfig": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const cfg = await getConfig();
         const incoming = (p.config ?? {}) as Partial<Config>;
         const next: Config = { ...cfg };
@@ -622,13 +625,13 @@ export async function POST(req: NextRequest) {
           me.id,
           "Configuration modifiée",
           "Paramètres plateforme",
-          `Service ${next.openHour}h–${next.closeHour}h · min ${euro(next.minFee)} · ${euro(next.perKm)}/km · répartition ${next.courierSharePercent}% livreur / ${100 - next.courierSharePercent}% plateforme`
+          `Service ${next.openHour}h–${next.closeHour}h · min ${euro(next.minFee)} · ${euro(next.perKm)}/km · répartition ${next.courierSharePercent}% livreur / ${100 - next.courierSharePercent}% wawangame (marge plateforme)`
         );
         return Response.json({ ok: true, config: next });
       }
 
       case "adminReassign": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const o = (await db.select().from(orders).where(eq(orders.id, n(p.orderId))).limit(1))[0];
         if (!o) throw new ApiError(404, "Commande introuvable.");
         if (o.status !== "prete") throw new ApiError(400, "Réattribution possible uniquement avant récupération.");
@@ -650,7 +653,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "adminCancel": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const o = (await db.select().from(orders).where(eq(orders.id, n(p.orderId))).limit(1))[0];
         if (!o) throw new ApiError(404, "Commande introuvable.");
         if (["livree", "annulee", "refusee"].includes(o.status)) throw new ApiError(400, "Commande déjà clôturée.");
@@ -662,7 +665,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "adminResolveDispute": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const d = (await db.select().from(disputes).where(eq(disputes.id, n(p.disputeId))).limit(1))[0];
         if (!d) throw new ApiError(404, "Réclamation introuvable.");
         const status = s(p.status) === "rejete" ? "rejete" : "resolu";
@@ -686,7 +689,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "adminPayout": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const po = (await db.select().from(payouts).where(eq(payouts.id, n(p.payoutId))).limit(1))[0];
         if (!po || po.status !== "demande") throw new ApiError(400, "Demande déjà traitée.");
         const approve = b(p.approve);
@@ -713,7 +716,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "adminSettleMerchant": {
-        const me = await requireUser(["admin"]);
+        const me = await requireActiveUser(["admin"]);
         const m = (await db.select().from(merchants).where(eq(merchants.id, n(p.merchantId))).limit(1))[0];
         if (!m) throw new ApiError(404, "Boutique introuvable.");
         const tx = await db
@@ -735,6 +738,52 @@ export async function POST(req: NextRequest) {
         });
         await notify(m.userId, "gain", `Reversement effectué · ${euro(owed)}`, "Le montant de vos ventes vous a été reversé (PSP démo).");
         await log(me.id, "Reversement commerçant", m.name, euro(owed));
+        return Response.json({ ok: true });
+      }
+
+      /* ================= MESSAGERIE & SONDAGES ================= */
+      case "adminSendMessage": {
+        const me = await requireActiveUser(["admin"]);
+        const res = await sendAdminMessage(me.id, p);
+        const audience = String(p.audience ?? "all") as Audience;
+        await log(
+          me.id,
+          "Message administrateur envoyé",
+          audience === "user" ? `Compte #${p.targetUserId}` : AUDIENCE_LABELS[audience] ?? audience,
+          `${s(p.subject)} · ${res.recipientCount} destinataire(s)`
+        );
+        return Response.json({ ok: true, ...res });
+      }
+
+      case "adminCreatePoll": {
+        const me = await requireActiveUser(["admin"]);
+        const res = await createAdminPoll(me.id, p);
+        const audience = String(p.audience ?? "all") as Audience;
+        await log(
+          me.id,
+          "Sondage créé",
+          audience === "user" ? `Compte #${p.targetUserId}` : AUDIENCE_LABELS[audience] ?? audience,
+          `${s(p.question)} · ${res.recipientCount} destinataire(s)`
+        );
+        return Response.json({ ok: true, ...res });
+      }
+
+      case "adminClosePoll": {
+        const me = await requireActiveUser(["admin"]);
+        await closeAdminPoll(p.pollId);
+        await log(me.id, "Sondage clôturé", `Sondage #${p.pollId}`, "Clôture manuelle par l'administration.");
+        return Response.json({ ok: true });
+      }
+
+      case "markMessageRead": {
+        const me = await requireUser();
+        await markMessageRead(me.id, p.messageId);
+        return Response.json({ ok: true });
+      }
+
+      case "votePoll": {
+        const me = await requireUser();
+        await voteInPoll(me.id, p.pollId, p.optionIndex);
         return Response.json({ ok: true });
       }
 

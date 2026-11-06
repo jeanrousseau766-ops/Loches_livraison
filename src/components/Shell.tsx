@@ -3,28 +3,14 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { api, usePoll, useCart, cartCount, toast, useMounted } from "@/lib/client";
+import { api, usePoll, useCart, cartCount, toast, useMounted, AUTH_EVENT, notifyAuthChange } from "@/lib/client";
 import type { MeData, PublicData } from "@/lib/types";
 import { timeAgo, hoursLabel } from "@/lib/util";
 import { Badge, Toasts } from "@/components/ui";
 import CheckoutFlow from "@/components/Checkout";
+import { BrandMark } from "@/components/Brand";
 
-const NAV = [
-  { href: "/", label: "Commander", short: "Commander", dot: "bg-vermillon", emoji: "🛍️" },
-  { href: "/livreur", label: "Espace livreur", short: "Livreur", dot: "bg-river", emoji: "🛵" },
-  { href: "/commercant", label: "Espace commerçant", short: "Commerce", dot: "bg-leaf", emoji: "🏪" },
-  { href: "/admin", label: "Administration", short: "Admin", dot: "bg-grape", emoji: "🛡️" },
-];
-
-export function BrandMark({ size = 34 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect width="32" height="32" rx="9" fill="#E4572E" />
-      <path d="M9 25V11h3V8h3v3h2V8h3v3h3v14h-5v-6h-4v6z" fill="#FFFCF3" />
-      <circle cx="24.5" cy="7.5" r="3" fill="#F3A712" />
-    </svg>
-  );
-}
+export { BrandMark } from "@/components/Brand";
 
 const ROLE_LABEL: Record<string, string> = {
   client: "Client",
@@ -46,6 +32,23 @@ export default function Shell({ children }: { children: ReactNode }) {
   const [userMenu, setUserMenu] = useState(false);
   const lastNotif = useRef(0);
   const user = me.data?.user ?? null;
+  const active = user?.status === "active";
+
+  /* Un seul raccourci « espace » : celui du compte connecté, jamais tous les rôles. */
+  const workspaceHref =
+    user?.role === "admin" ? "/admin" :
+    user?.role === "livreur" ? "/livreur" :
+    user?.role === "commercant" ? "/commercant" : "/compte";
+  const workspaceLabel =
+    user?.role === "admin" ? "Administration" :
+    user?.role === "livreur" ? (active ? "Espace livreur" : "Ma candidature") :
+    user?.role === "commercant" ? (active ? "Ma boutique" : "Ma candidature") :
+    "Mes commandes";
+  const workspaceEmoji =
+    user?.role === "admin" ? "🛡️" :
+    user?.role === "livreur" ? "🛵" :
+    user?.role === "commercant" ? "🏪" : "📦";
+  const showAdminShortcut = user?.role === "admin" && active;
 
   useEffect(() => {
     const top = me.data?.notifications?.[0];
@@ -60,6 +63,12 @@ export default function Shell({ children }: { children: ReactNode }) {
     window.addEventListener("locho:cart", open);
     return () => window.removeEventListener("locho:cart", open);
   }, []);
+
+  useEffect(() => {
+    const onAuth = () => me.refresh();
+    window.addEventListener(AUTH_EVENT, onAuth);
+    return () => window.removeEventListener(AUTH_EVENT, onAuth);
+  }, [me.refresh]);
 
   useEffect(() => {
     setBellOpen(false);
@@ -80,15 +89,30 @@ export default function Shell({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await api("logout");
-    toast("Vous êtes déconnecté·e.", "info");
-    me.refresh();
-    router.push("/");
+    try {
+      await api("logout");
+      notifyAuthChange();
+      toast("Vous êtes déconnecté·e.", "info");
+      me.refresh();
+      router.push("/");
+      router.refresh();
+    } catch (e) {
+      toast((e as Error).message, "err");
+    }
   };
 
   const open = pub.data?.serviceOpen ?? true;
   const cfg = pub.data?.config;
   const count = cartCount(cart);
+  const commanderActive = pathname === "/" || pathname.startsWith("/boutique") || pathname.startsWith("/commande") || pathname.startsWith("/compte");
+
+  const mobileItems = [
+    { href: "/#commerces", label: "Commerces", emoji: "🏪", active: false },
+    { href: "/#resultats", label: "Recherche", emoji: "🔎", active: false },
+    user
+      ? { href: workspaceHref, label: user.role === "client" ? "Commandes" : "Mon espace", emoji: workspaceEmoji, active: pathname.startsWith(workspaceHref) }
+      : { href: "/connexion", label: "Connexion", emoji: "👤", active: pathname === "/connexion" },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -98,7 +122,7 @@ export default function Shell({ children }: { children: ReactNode }) {
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <BrandMark />
             <span className="leading-none">
-              <span className="font-display text-[22px] font-black tracking-tight">Locho</span>
+              <span className="font-display text-[20px] font-black tracking-tight">WawanPost</span>
               <span className="mt-0.5 block text-[9px] font-extrabold uppercase tracking-[0.24em] text-ink-soft">
                 Loches · 37
               </span>
@@ -106,19 +130,31 @@ export default function Shell({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="ml-4 hidden lg:flex items-center gap-1">
-            {NAV.map((n) => {
-              const active = n.href === "/" ? pathname === "/" || pathname.startsWith("/boutique") || pathname.startsWith("/commande") || pathname.startsWith("/compte") : pathname.startsWith(n.href);
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold transition ${active ? "bg-ink text-cream" : "text-ink-soft hover:bg-ink/5 hover:text-ink"}`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${n.dot}`} />
-                  {n.label}
-                </Link>
-              );
-            })}
+            <Link
+              href="/"
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold transition ${commanderActive ? "bg-ink text-cream" : "text-ink-soft hover:bg-ink/5 hover:text-ink"}`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-vermillon" />
+              Commander
+            </Link>
+            <Link href="/#commerces" className="rounded-xl px-3 py-2 text-[13px] font-bold text-ink-soft transition hover:bg-ink/5 hover:text-ink">
+              Les commerces
+            </Link>
+            {user && (user.role !== "admin" || showAdminShortcut) && (
+              <Link
+                href={workspaceHref}
+                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold transition ${pathname.startsWith(workspaceHref) ? "bg-ink text-cream" : "text-ink-soft hover:bg-ink/5 hover:text-ink"}`}
+              >
+                <span>{workspaceEmoji}</span>
+                {workspaceLabel}
+              </Link>
+            )}
+            {user && (
+              <Link href="/messagerie" className={`relative rounded-xl px-3 py-2 text-[13px] font-bold transition ${pathname === "/messagerie" ? "bg-ink text-cream" : "text-ink-soft hover:bg-ink/5 hover:text-ink"}`}>
+                📨 Messages
+                {((me.data?.inboxUnread ?? 0) + (me.data?.pollsPending ?? 0)) > 0 && <span className="ml-1.5 rounded-full bg-vermillon px-1.5 text-[10px] text-cream">{(me.data?.inboxUnread ?? 0) + (me.data?.pollsPending ?? 0)}</span>}
+              </Link>
+            )}
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
@@ -159,6 +195,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                           onClick={() => {
                             setBellOpen(false);
                             if (nt.orderId) router.push(`/commande/${nt.orderId}`);
+                            else if (nt.kind === "message" || nt.kind === "sondage") router.push("/messagerie");
                           }}
                         >
                           <p className="text-[13px] font-extrabold">{nt.title}</p>
@@ -205,14 +242,20 @@ export default function Shell({ children }: { children: ReactNode }) {
                     <div className="border-b border-line px-4 py-3">
                       <p className="text-sm font-extrabold truncate">{user.displayName || user.pseudo}</p>
                       <Badge tone={user.role === "admin" ? "grape" : user.role === "livreur" ? "river" : user.role === "commercant" ? "leaf" : "vermillon"} className="mt-1">
-                        {ROLE_LABEL[user.role]}
+                        {ROLE_LABEL[user.role]}{!active && user.role !== "client" ? " · à valider" : ""}
                       </Badge>
                     </div>
                     <div className="p-1.5 text-sm font-bold">
                       <Link href="/compte" className="block rounded-lg px-3 py-2 hover:bg-paper">📦 Mes commandes</Link>
-                      {user.role === "livreur" && <Link href="/livreur" className="block rounded-lg px-3 py-2 hover:bg-paper">🛵 Mon espace livreur</Link>}
-                      {user.role === "commercant" && <Link href="/commercant" className="block rounded-lg px-3 py-2 hover:bg-paper">🏪 Ma boutique</Link>}
-                      {user.role === "admin" && <Link href="/admin" className="block rounded-lg px-3 py-2 hover:bg-paper">🛡️ Administration</Link>}
+                      <Link href="/messagerie" className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-paper">
+                        <span>📨 Messages & sondages</span>
+                        {((me.data?.inboxUnread ?? 0) + (me.data?.pollsPending ?? 0)) > 0 && (
+                          <span className="rounded-full bg-vermillon px-1.5 text-[10px] text-cream">{(me.data?.inboxUnread ?? 0) + (me.data?.pollsPending ?? 0)}</span>
+                        )}
+                      </Link>
+                      {(user.role !== "admin" || showAdminShortcut) && (
+                        <Link href={workspaceHref} className="block rounded-lg px-3 py-2 hover:bg-paper">{workspaceEmoji} {workspaceLabel}</Link>
+                      )}
                       <button onClick={logout} className="block w-full rounded-lg px-3 py-2 text-left text-danger hover:bg-danger/5 cursor-pointer">
                         ↪ Se déconnecter
                       </button>
@@ -221,9 +264,15 @@ export default function Shell({ children }: { children: ReactNode }) {
                 )}
               </div>
             ) : (
-              <Link href="/connexion" className="btn-primary !py-2 hidden sm:inline-flex">
-                Se connecter
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link href="/connexion" className="btn-primary !px-3 !py-2 !text-xs sm:!text-sm">
+                  <span className="sm:hidden">Connexion</span>
+                  <span className="hidden sm:inline">Se connecter</span>
+                </Link>
+                <Link href="/inscription" className="btn-ghost hidden md:inline-flex !px-3 !py-2 !text-xs">
+                  Créer un compte
+                </Link>
+              </div>
             )}
 
             <button onClick={() => setMobileNav((v) => !v)} className="lg:hidden rounded-xl border border-ink/12 p-2.5 cursor-pointer" aria-label="Menu">
@@ -236,13 +285,20 @@ export default function Shell({ children }: { children: ReactNode }) {
         {mobileNav && (
           <div className="lg:hidden border-t border-line bg-cream px-4 py-3 anim-pop">
             <div className="grid grid-cols-2 gap-2">
-              {NAV.map((n) => (
-                <Link key={n.href} href={n.href} className="flex items-center gap-2 rounded-xl border border-line px-3 py-3 text-sm font-bold">
-                  <span>{n.emoji}</span> {n.label}
-                </Link>
-              ))}
-              {!user && (
-                <Link href="/connexion" className="col-span-2 btn-primary">Se connecter / Créer un compte</Link>
+              <Link href="/" className="flex items-center gap-2 rounded-xl border border-line px-3 py-3 text-sm font-bold">🛍️ Commander</Link>
+              <Link href="/#commerces" className="flex items-center gap-2 rounded-xl border border-line px-3 py-3 text-sm font-bold">🏪 Les commerces</Link>
+              {user ? (
+                <>
+                  <Link href={workspaceHref} className="flex items-center gap-2 rounded-xl border border-line px-3 py-3 text-sm font-bold">
+                    {workspaceEmoji} {workspaceLabel}
+                  </Link>
+                  <Link href="/messagerie" className="flex items-center gap-2 rounded-xl border border-line px-3 py-3 text-sm font-bold">📨 Messages & sondages</Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/connexion" className="btn-primary">Se connecter</Link>
+                  <Link href="/inscription" className="btn-ghost">Créer un compte</Link>
+                </>
               )}
             </div>
           </div>
@@ -252,19 +308,22 @@ export default function Shell({ children }: { children: ReactNode }) {
       {/* ---------- Contenu ---------- */}
       <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
 
-      {/* ---------- Navigation mobile ---------- */}
+      {/* ---------- Navigation mobile : parcours client uniquement ---------- */}
       <nav className="fixed inset-x-0 bottom-0 z-[80] border-t border-line bg-cream/95 backdrop-blur md:hidden">
         <div className="grid grid-cols-4">
-          {NAV.map((n) => {
-            const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
-            return (
-              <Link key={n.href} href={n.href} className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-extrabold ${active ? "text-vermillon-deep" : "text-ink-soft"}`}>
-                <span className="text-lg leading-none">{n.emoji}</span>
-                {n.short}
-                <span className={`h-1 w-1 rounded-full ${active ? n.dot : "bg-transparent"}`} />
-              </Link>
-            );
-          })}
+          {mobileItems.map((n) => (
+            <Link key={n.label} href={n.href} className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-extrabold ${n.active ? "text-vermillon-deep" : "text-ink-soft"}`}>
+              <span className="text-lg leading-none">{n.emoji}</span>
+              {n.label}
+              <span className={`h-1 w-1 rounded-full ${n.active ? "bg-vermillon" : "bg-transparent"}`} />
+            </Link>
+          ))}
+          <button onClick={() => setCartOpen(true)} className="relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-extrabold text-ink-soft cursor-pointer">
+            <span className="text-lg leading-none">🧺</span>
+            Panier
+            {mounted && count > 0 && <span className="absolute right-5 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-vermillon px-1 text-[9px] text-cream">{count}</span>}
+            <span className="h-1 w-1 rounded-full bg-transparent" />
+          </button>
         </div>
       </nav>
 
@@ -274,7 +333,7 @@ export default function Shell({ children }: { children: ReactNode }) {
           <div>
             <div className="flex items-center gap-2.5">
               <BrandMark size={30} />
-              <span className="font-display text-xl font-black text-cream">Locho</span>
+              <span className="font-display text-xl font-black text-cream">WawanPost</span>
             </div>
             <p className="mt-3 text-sm leading-relaxed">
               La plateforme de livraison universelle de la Cité royale : repas, courses, fleurs, cadeaux, colis…
@@ -283,12 +342,12 @@ export default function Shell({ children }: { children: ReactNode }) {
             <p className="mt-3 text-xs font-bold text-ambre">🕓 Tous les jours · {cfg ? hoursLabel(cfg.openHour, cfg.closeHour) : "04h – 23h"}</p>
           </div>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-cream/50">Les 4 espaces</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-cream/50">WawanPost</p>
             <ul className="mt-3 space-y-2 text-sm font-bold">
-              <li><Link className="hover:text-ambre transition" href="/">Espace client</Link></li>
-              <li><Link className="hover:text-ambre transition" href="/livreur">Espace livreur</Link></li>
-              <li><Link className="hover:text-ambre transition" href="/commercant">Espace commerçant</Link></li>
-              <li><Link className="hover:text-ambre transition" href="/admin">Administration</Link></li>
+              <li><Link className="hover:text-ambre transition" href="/">Commander</Link></li>
+              {!user && <li><Link className="hover:text-ambre transition" href="/inscription">Créer un compte</Link></li>}
+              <li><Link className="hover:text-ambre transition" href="/compte">Mes commandes</Link></li>
+              <li><Link className="hover:text-ambre transition" href="/legal#reclamation">Réclamations</Link></li>
             </ul>
           </div>
           <div>
@@ -307,13 +366,13 @@ export default function Shell({ children }: { children: ReactNode }) {
               <li><Link className="hover:text-ambre transition" href="/legal#cgv">CGU / CGV</Link></li>
               <li><Link className="hover:text-ambre transition" href="/legal#confidentialite">Confidentialité & RGPD</Link></li>
               <li><Link className="hover:text-ambre transition" href="/legal#produits">Produits réglementés</Link></li>
-              <li><Link className="hover:text-ambre transition" href="/legal#reclamation">Réclamations</Link></li>
+              <li><Link className="hover:text-ambre transition" href="/legal#wawangame">Crédits & marge</Link></li>
             </ul>
           </div>
         </div>
         <div className="relative border-t border-cream/10">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-6 py-4 text-[11px] text-cream/50">
-            <span>© 2026 Locho — Projet Loches (Indre-et-Loire). Aucune commission sur les produits des commerçants.</span>
+            <span>© 2026 WawanPost — Projet Loches (37). 100 % de la marge plateforme est affectée à la micronation <strong className="text-ambre">wawangame</strong>.</span>
             <span>🔒 Paiements via prestataire agréé multi-vendeurs (mode démonstration) · Données protégées (RGPD)</span>
           </div>
         </div>

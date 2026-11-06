@@ -1,12 +1,21 @@
-LOCHO — CORRECTIF VERCEL
-========================
-Le design et les fonctionnalités de la version B sont conservés.
+WAWANPOST — VERSION B CORRIGÉE POUR VERCEL
+==========================================
+Le design de la version B est conservé. Nouveautés :
+- nom du site : WawanPost ;
+- navigation publique sans raccourcis vers tous les espaces ;
+- administration privée (/admin redirige vers la connexion) ;
+- espaces livreur/commerçant activés seulement après validation ;
+- espace client après création du compte ;
+- 100 % de la marge plateforme affectée à la micronation wawangame ;
+- boutons Se connecter / Créer un compte réparés et visibles sur mobile ;
+- messagerie administration : tout le monde, une catégorie ou un compte précis ;
+- sondages par catégorie ou globaux, votes et résultats côté admin.
 
 SI VOTRE DÉPÔT GITHUB EXISTE DÉJÀ
 1. Ne créez pas un nouveau projet et ne supprimez pas votre base Neon.
 2. Sur GitHub, ouvrez votre dépôt → Add file → Upload files.
 3. Glissez tout le contenu du dossier extrait (src, drizzle, public,
-   package.json, package-lock.json, etc.), pas un dossier_parent autour.
+   package.json, package-lock.json, etc.), pas un dossier parent autour.
 4. Cliquez sur Commit changes.
 
 DANS VERCEL — INDISPENSABLE POUR LA BASE
@@ -24,6 +33,7 @@ DANS VERCEL — INDISPENSABLE POUR LA BASE
 VÉRIFICATION
 9. Ouvrez https://VOTRE-URL/api/health : vous devez voir {"ok":true}.
 10. Ouvrez https://VOTRE-URL/ pour retrouver le site.
+11. /admin doit rediriger vers la connexion si vous n'êtes pas administrateur.
 
 IMPORTANT
 - Enregistrer une variable ne suffit pas : il faut REDÉPLOYER ensuite.

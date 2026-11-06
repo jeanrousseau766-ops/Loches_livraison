@@ -4,15 +4,27 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 
 /* ---------- API ---------- */
 
+export const AUTH_EVENT = "wawanpost:auth";
+
+export function notifyAuthChange() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(AUTH_EVENT));
+}
+
 export async function api<T = Record<string, unknown>>(
   action: string,
   payload: Record<string, unknown> = {}
 ): Promise<T> {
-  const res = await fetch("/api/action", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, payload }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("/api/action", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, payload }),
+    });
+  } catch {
+    throw new Error("Connexion au serveur impossible. Vérifiez votre réseau puis réessayez.");
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Une erreur est survenue.");
   return data as T;

@@ -518,7 +518,7 @@ function Dashboard() {
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-xl bg-paper p-3 text-center"><p className="text-lg font-black tabular-nums">{earn.deliveredCount}</p><p className="text-[10px] font-extrabold uppercase text-ink-soft">Livrées</p></div>
             <div className="rounded-xl bg-paper p-3 text-center"><p className="text-lg font-black tabular-nums">{earn.cancelledCount}</p><p className="text-[10px] font-extrabold uppercase text-ink-soft">Annulées</p></div>
-            <div className="rounded-xl bg-paper p-3 text-center"><p className="text-lg font-black tabular-nums">{euro(earn.fees)}</p><p className="text-[10px] font-extrabold uppercase text-ink-soft">Part plateforme</p></div>
+            <div className="rounded-xl bg-paper p-3 text-center"><p className="text-lg font-black tabular-nums">{euro(earn.fees)}</p><p className="text-[10px] font-extrabold uppercase text-ink-soft">Part wawangame</p></div>
             <div className="rounded-xl bg-paper p-3 text-center"><p className="text-lg font-black tabular-nums">{euro(earn.paidOut)}</p><p className="text-[10px] font-extrabold uppercase text-ink-soft">Déjà versé</p></div>
           </div>
         </div>
@@ -572,26 +572,12 @@ function Dashboard() {
 export default function LivreurPage() {
   const me = usePoll<MeData>("me", {}, 8000);
   const [showApply, setShowApply] = useState(false);
-  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     if (window.location.search.includes("apply")) setShowApply(true);
   }, []);
 
   const u = me.data?.user;
-
-  const demoLogin = async () => {
-    setSwitching(true);
-    try {
-      await api("login", { pseudo: "yanis", password: "demo1234" });
-      toast("Connecté en tant que Yanis (livreur validé) 🛵");
-      me.refresh();
-    } catch (e) {
-      toast((e as Error).message, "err");
-    } finally {
-      setSwitching(false);
-    }
-  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -601,24 +587,15 @@ export default function LivreurPage() {
         <>
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-river via-[#1c4fd6] to-[#12327e] p-8 text-cream grain sm:p-12">
             <span className="absolute -right-6 -bottom-10 text-[160px] opacity-15">🛵</span>
-            <p className="relative text-[11px] font-extrabold uppercase tracking-[0.22em] text-cream/60">Espace livreur · Loches (37)</p>
+            <p className="relative text-[11px] font-extrabold uppercase tracking-[0.22em] text-cream/60">Candidature livreur · WawanPost · Loches (37)</p>
             <h1 className="relative mt-3 max-w-2xl font-display text-4xl font-black leading-tight sm:text-5xl">Votre secteur. Vos heures. Vos courses.</h1>
             <p className="relative mt-4 max-w-xl text-[15px] leading-relaxed text-cream/80">
-              Choisissez votre capacité (ex. 5 commandes), votre point central (ex. mairie de Loches) et votre rayon
-              (ex. 5 km). Le système calcule les places disponibles et ne vous attribue jamais plus que votre limite.
+              Déposez votre dossier : l'espace livreur n'est activé qu'après vérification administrative.
+              Une fois validé, vous choisissez capacité, point central et rayon ; le système ne vous attribue jamais plus que votre limite.
             </p>
             <div className="relative mt-6 flex flex-wrap gap-3">
-              {u && u.role !== "livreur" ? (
-                <>
-                  <button onClick={demoLogin} disabled={switching} className="btn bg-cream text-river hover:bg-paper">{switching ? <Spinner /> : "🛵 Essayer avec le compte démo Yanis"}</button>
-                  <button onClick={() => setShowApply(true)} className="btn border border-cream/40 text-cream hover:bg-cream/10">Déposer ma candidature</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => setShowApply(true)} className="btn bg-cream text-river hover:bg-paper">Déposer ma candidature →</button>
-                  <button onClick={demoLogin} disabled={switching} className="btn border border-cream/40 text-cream hover:bg-cream/10">{switching ? <Spinner /> : "Compte démo : yanis / demo1234"}</button>
-                </>
-              )}
+              <button onClick={() => setShowApply(true)} className="btn bg-cream text-river hover:bg-paper">Déposer ma candidature →</button>
+              <Link href="/connexion?return=/livreur" className="btn border border-cream/40 text-cream hover:bg-cream/10">J'ai déjà un compte livreur</Link>
             </div>
             <div className="relative mt-8 grid max-w-2xl gap-3 text-[12px] font-extrabold sm:grid-cols-3">
               <span className="rounded-xl bg-cream/10 px-4 py-3">💶 70 % des frais de livraison pour vous</span>
@@ -643,7 +620,7 @@ export default function LivreurPage() {
 
       {showApply && (!u || u.role !== "livreur") && (
         <div className="mt-8">
-          <PageHead kicker="Candidature" title="Devenir livreur Locho" sub="Votre dossier est transmis automatiquement à l'administration. Aucune livraison n'est possible avant validation." />
+          <PageHead kicker="Candidature" title="Devenir livreur WawanPost" sub="Votre dossier est transmis automatiquement à l'administration. Aucune livraison n'est possible avant validation." />
           <ApplyForm />
           <p className="mt-3 text-center text-sm font-bold text-ink-soft">Déjà candidat ? <Link href="/connexion" className="underline text-river">Se connecter</Link></p>
         </div>

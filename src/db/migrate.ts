@@ -25,6 +25,11 @@ const REQUIRED_TABLES = [
   "disputes",
   "admin_logs",
   "settings",
+  "admin_messages",
+  "admin_message_recipients",
+  "polls",
+  "poll_recipients",
+  "poll_votes",
 ];
 
 async function tableCount(): Promise<number> {

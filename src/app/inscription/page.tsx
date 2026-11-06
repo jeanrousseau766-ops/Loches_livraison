@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api, toast } from "@/lib/client";
+import { api, toast, notifyAuthChange } from "@/lib/client";
 import { Field, Spinner } from "@/components/ui";
 
 export default function InscriptionPage() {
@@ -12,19 +12,25 @@ export default function InscriptionPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [check, setCheck] = useState<{ valid: boolean; available: boolean } | null>(null);
+  const [checkError, setCheckError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const pseudoValid = /^[a-z0-9_.-]{3,20}$/i.test(pseudo.trim());
 
   useEffect(() => {
     if (pseudo.trim().length < 3) {
       setCheck(null);
+      setCheckError(false);
       return;
     }
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/state?scope=checkPseudo&pseudo=${encodeURIComponent(pseudo.trim())}`);
+        const res = await fetch(`/api/state?scope=checkPseudo&pseudo=${encodeURIComponent(pseudo.trim())}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("check");
         setCheck(await res.json());
+        setCheckError(false);
       } catch {
         setCheck(null);
+        setCheckError(true);
       }
     }, 350);
     return () => clearTimeout(t);
@@ -39,8 +45,10 @@ export default function InscriptionPage() {
     setBusy(true);
     try {
       await api("register", { pseudo, password });
+      notifyAuthChange();
       toast(`Bienvenue ${pseudo} ! Votre compte est prêt 🎉`);
-      router.push("/");
+      router.replace("/compte");
+      router.refresh();
     } catch (err) {
       toast((err as Error).message, "err");
     } finally {
@@ -73,7 +81,8 @@ export default function InscriptionPage() {
           <Field label="Confirmer le mot de passe">
             <input className="input" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" autoComplete="new-password" />
           </Field>
-          <button className="btn-primary w-full !py-3.5" disabled={busy || !check?.available || password.length < 6 || password !== confirm}>
+          {checkError && <p className="text-[11px] font-bold text-ink-soft">Vérification de disponibilité indisponible pour le moment ; le serveur vérifiera à l'envoi.</p>}
+          <button type="submit" className="btn-primary w-full !py-3.5" aria-busy={busy} disabled={busy || !pseudoValid || password.length < 6 || password !== confirm || check?.available === false}>
             {busy ? <Spinner /> : "Créer mon compte →"}
           </button>
           <p className="text-center text-[11px] text-ink-soft">

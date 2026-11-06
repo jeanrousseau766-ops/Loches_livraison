@@ -242,7 +242,7 @@ export default function TrackingPage({ params }: { params: Promise<{ id: string 
                       <div key={i} className="flex justify-between"><span className="text-ink-soft">{l.label}</span><span className="tabular-nums font-semibold">{euro(l.amount)}</span></div>
                     ))}
                     <div className="flex justify-between border-t border-line pt-1 text-[11px] text-ink-soft">
-                      <span>Réparti : livreur {euro(o.feeBreakdown.courierShare)} · plateforme {euro(o.feeBreakdown.platformShare)}</span>
+                      <span>Réparti : livreur {euro(o.feeBreakdown.courierShare)} · wawangame {euro(o.feeBreakdown.platformShare)}</span>
                     </div>
                   </div>
                 </details>

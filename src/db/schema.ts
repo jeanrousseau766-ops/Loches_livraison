@@ -7,6 +7,7 @@ import {
   boolean,
   jsonb,
   doublePrecision,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 /* ---------- Types partagés (JSON) ---------- */
@@ -238,3 +239,61 @@ export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").$type<Record<string, unknown>>().notNull().default({}),
 });
+
+/* ---------- Messagerie administration & sondages ---------- */
+
+export type Audience = "all" | "client" | "livreur" | "commercant" | "user";
+
+export const adminMessages = pgTable("admin_messages", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull(),
+  audience: text("audience").$type<Audience>().notNull(),
+  targetUserId: integer("target_user_id"),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+
+export const adminMessageRecipients = pgTable(
+  "admin_message_recipients",
+  {
+    messageId: integer("message_id").notNull(),
+    userId: integer("user_id").notNull(),
+    readAt: bigint("read_at", { mode: "number" }),
+  },
+  (t) => [primaryKey({ columns: [t.messageId, t.userId] })]
+);
+
+export const polls = pgTable("polls", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull(),
+  audience: text("audience").$type<Audience>().notNull(),
+  targetUserId: integer("target_user_id"),
+  question: text("question").notNull(),
+  description: text("description").notNull().default(""),
+  options: jsonb("options").$type<string[]>().notNull(),
+  status: text("status").$type<"open" | "closed">().notNull().default("open"),
+  closesAt: bigint("closes_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  closedAt: bigint("closed_at", { mode: "number" }),
+});
+
+export const pollRecipients = pgTable(
+  "poll_recipients",
+  {
+    pollId: integer("poll_id").notNull(),
+    userId: integer("user_id").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.pollId, t.userId] })]
+);
+
+export const pollVotes = pgTable(
+  "poll_votes",
+  {
+    pollId: integer("poll_id").notNull(),
+    userId: integer("user_id").notNull(),
+    optionIndex: integer("option_index").notNull(),
+    createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.pollId, t.userId] })]
+);

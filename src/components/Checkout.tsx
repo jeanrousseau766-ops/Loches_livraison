@@ -270,7 +270,7 @@ export default function CheckoutFlow({
               <p className="mt-1 flex items-center gap-2 text-sm font-extrabold">
                 <span className="text-lg">{merchant?.emoji}</span> {merchant?.name}
               </p>
-              <p className="mt-0.5 text-[11px] text-ink-soft">{merchant?.legalName} — Locho est uniquement prestataire de livraison. Prix fixés par le commerçant, sans marge plateforme.</p>
+              <p className="mt-0.5 text-[11px] text-ink-soft">{merchant?.legalName} — WawanPost est uniquement prestataire de livraison. Prix fixés par le commerçant, sans marge plateforme.</p>
               <div className="my-3 border-t border-dashed border-line" />
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between font-bold">
@@ -299,7 +299,7 @@ export default function CheckoutFlow({
               </p>
             </div>
             <div className="card space-y-2 p-4 text-[11px] leading-relaxed text-ink-soft">
-              <p>💳 Carte bancaire via prestataire de paiement agréé multi-vendeurs (démo — aucun débit réel). Fonds répartis automatiquement : commerçant, livreur, plateforme.</p>
+              <p>💳 Carte bancaire via prestataire de paiement agréé multi-vendeurs (démo — aucun débit réel). Fonds répartis automatiquement : commerçant, livreur, wawangame.</p>
               <p>↩️ Annulation gratuite avant préparation avancée, remboursement intégral sous 2–5 jours. Réclamation via votre espace commandes. Droit de rétractation de 14 j sauf produits périssables ou confectionnés sur mesure (<Link className="underline" href="/legal#cgv">détails CGV</Link>).</p>
               <label className="flex cursor-pointer items-start gap-2 pt-1 text-ink">
                 <input type="checkbox" checked={cgv} onChange={(e) => setCgv(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#E4572E]" />

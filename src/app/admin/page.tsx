@@ -9,6 +9,7 @@ import { euro, fmtDateTime, timeAgo, computeFee, feeTotal, CATEGORY_META, VEHICL
 import { Badge, Field, Modal, PageHead, Spinner, StatusChip, Stat, Toggle, EmptyState } from "@/components/ui";
 import MapView from "@/components/MapView";
 import { AreaChart, Bars, Donut } from "@/components/Charts";
+import CommunityPanel from "@/components/admin/CommunityPanel";
 
 function EuroInput({ value, onChange }: { value: number; onChange: (cents: number) => void }) {
   return (
@@ -78,8 +79,6 @@ export default function AdminPage() {
   const { data, refresh } = usePoll<AdminData>("admin", {}, isAdmin ? 6000 : 3600000);
   const [tab, setTab] = useState("overview");
   const [subTab, setSubTab] = useState("livreurs");
-  const [pseudo, setPseudo] = useState("admin");
-  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [dossier, setDossier] = useState<(SafeUser & { courier: CourierRow | null; merchant: MerchantRow | null }) | null>(null);
   const [docView, setDocView] = useState<DocEntry | null>(null);
@@ -102,19 +101,6 @@ export default function AdminPage() {
     if (data && !cfg) setCfg(JSON.parse(JSON.stringify(data.config)) as Config);
   }, [data, cfg]);
 
-  const login = async (pw?: string) => {
-    setBusy(true);
-    try {
-      await api("login", { pseudo, password: pw ?? password });
-      toast("Bienvenue dans l'administration 🛡️");
-      me.refresh();
-    } catch (e) {
-      toast((e as Error).message, "err");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const act = async (action: string, payload: Record<string, unknown>, msg: string) => {
     setBusy(true);
     try {
@@ -134,20 +120,10 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-14">
-        <div className="card overflow-hidden">
-          <div className="bg-gradient-to-br from-grape to-[#37217e] p-8 text-cream grain relative">
-            <p className="relative text-4xl">🛡️</p>
-            <h1 className="relative mt-3 font-display text-3xl font-black">Administration Locho</h1>
-            <p className="relative mt-2 text-sm text-cream/75">Espace privé réservé aux comptes autorisés. Chaque action est enregistrée dans le journal d'audit.</p>
-          </div>
-          <form className="space-y-4 p-6" onSubmit={(e) => { e.preventDefault(); login(); }}>
-            <Field label="Pseudonyme"><input className="input" value={pseudo} onChange={(e) => setPseudo(e.target.value)} /></Field>
-            <Field label="Mot de passe"><input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></Field>
-            <button className="btn-primary w-full !py-3" disabled={busy}>{busy ? <Spinner /> : "Accéder au tableau de bord"}</button>
-            <button type="button" className="btn-ghost w-full" onClick={() => login("loches37")} disabled={busy}>Compte démo : admin / loches37</button>
-          </form>
-        </div>
+      <div className="mx-auto max-w-2xl px-4 py-16">
+        <EmptyState emoji="🔒" title="Session administration requise" text="Votre session a expiré ou ce compte n'est pas autorisé. Reconnectez-vous avec un compte administrateur actif.">
+          <Link href="/connexion?return=/admin&prive=1" className="btn-primary mt-3">Se connecter</Link>
+        </EmptyState>
       </div>
     );
   }
@@ -168,6 +144,7 @@ export default function AdminPage() {
     { id: "orders", label: "🧾 Commandes", badge: data.orders.filter((o) => o.blocked).length },
     { id: "disputes", label: "⚠️ Litiges", badge: k.disputesOpen },
     { id: "finance", label: "🏦 Finances", badge: k.payoutsPending },
+    { id: "community", label: "📨 Messages & sondages" },
     { id: "config", label: "⚙️ Configuration" },
     { id: "journal", label: "📜 Journal" },
   ];
@@ -195,7 +172,7 @@ export default function AdminPage() {
             <Stat label="Commandes en cours" value={k.ordersActive} icon="⏳" tone="text-river" />
             <Stat label="Commandes terminées" value={k.ordersDone} icon="✅" tone="text-leaf" />
             <Stat label="Chiffre d'affaires" value={euro(k.ca)} icon="💶" />
-            <Stat label="Revenus plateforme" value={euro(k.platformRevenue)} icon="🏦" tone="text-vermillon-deep" />
+            <Stat label="Marge wawangame" value={euro(k.platformRevenue)} icon="🏦" tone="text-vermillon-deep" />
             <Stat label="Dû aux livreurs" value={euro(k.owedCouriers)} icon="🛵" tone="text-river" />
             <Stat label="Dû aux commerçants" value={euro(k.owedMerchants)} icon="🏪" tone="text-leaf" />
             <Stat label="Litiges ouverts" value={k.disputesOpen} icon="⚠️" tone={k.disputesOpen ? "text-danger" : "text-ink"} />
@@ -211,9 +188,9 @@ export default function AdminPage() {
               <div className="card p-5">
                 <p className="font-display text-base font-black">Répartition des frais</p>
                 <div className="mt-3">
-                  <Donut parts={[{ label: "Livreurs", value: cfg.courierSharePercent, color: "#2667FF" }, { label: "Plateforme", value: 100 - cfg.courierSharePercent, color: "#E4572E" }]} centerLabel={`${cfg.courierSharePercent}%`} centerSub="livreurs" size={130} />
+                  <Donut parts={[{ label: "Livreurs", value: cfg.courierSharePercent, color: "#2667FF" }, { label: "wawangame", value: 100 - cfg.courierSharePercent, color: "#E4572E" }]} centerLabel={`${cfg.courierSharePercent}%`} centerSub="livreurs" size={130} />
                 </div>
-                <p className="mt-2 text-[11px] text-ink-soft">0 % de commission sur les produits — revenus uniquement sur la livraison.</p>
+                <p className="mt-2 text-[11px] text-ink-soft">0 % de commission sur les produits — la marge plateforme est intégralement affectée à wawangame.</p>
               </div>
               <div className="card p-5">
                 <p className="font-display text-base font-black">Livreurs en ligne</p>
@@ -440,7 +417,7 @@ export default function AdminPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <Stat label="Dû aux livreurs" value={euro(k.owedCouriers)} icon="🛵" tone="text-river" />
             <Stat label="Dû aux commerçants" value={euro(k.owedMerchants)} icon="🏪" tone="text-leaf" />
-            <Stat label="Revenus plateforme" value={euro(k.platformRevenue)} icon="🏦" tone="text-vermillon-deep" />
+            <Stat label="Marge wawangame" value={euro(k.platformRevenue)} icon="🏦" tone="text-vermillon-deep" />
           </div>
           <div className="card p-5">
             <p className="font-display text-lg font-black">Demandes de versement des livreurs</p>
@@ -465,10 +442,15 @@ export default function AdminPage() {
           </div>
           <div className="rounded-2xl border border-line bg-cream px-5 py-4 text-[12px] leading-relaxed text-ink-soft">
             🧾 <strong>Traçabilité intégrale :</strong> chaque commande génère un paiement client, la part produits du commerçant (sans marge),
-            la part livreur et la part plateforme. Remboursements, versements et reversements sont des écritures horodatées, consultables
+            la part livreur et la part wawangame (100 % de la marge plateforme). Remboursements, versements et reversements sont des écritures horodatées, consultables
             dans le journal. Les fonds transitent par un prestataire de paiement agréé multi-vendeurs — jamais par la plateforme (mode démonstration).
           </div>
         </div>
+      )}
+
+      {/* ================= MESSAGERIE & SONDAGES ================= */}
+      {tab === "community" && (
+        <CommunityPanel data={data} busy={busy} onAction={act} />
       )}
 
       {/* ================= CONFIGURATION ================= */}
@@ -523,9 +505,12 @@ export default function AdminPage() {
               <div>
                 <div className="flex items-center justify-between">
                   <span className="label !mb-0">Répartition des frais de livraison</span>
-                  <span className="text-sm font-black text-river">{cfg.courierSharePercent} % livreur · {100 - cfg.courierSharePercent} % plateforme</span>
+                  <span className="text-sm font-black text-river">{cfg.courierSharePercent} % livreur · {100 - cfg.courierSharePercent} % wawangame</span>
                 </div>
                 <input type="range" min={0} max={100} value={cfg.courierSharePercent} onChange={(e) => setCfg({ ...cfg, courierSharePercent: Number(e.target.value) })} className="mt-2 w-full accent-[#2667FF]" aria-label="Part livreur" />
+                <p className="mt-2 rounded-xl bg-vermillon/8 px-3 py-2 text-[11px] font-bold text-vermillon-deep">
+                  🏛️ 100 % de la part plateforme est affectée à la micronation <strong>wawangame</strong>. La part livreur reste versée au livreur.
+                </p>
               </div>
             </div>
 
@@ -555,7 +540,7 @@ export default function AdminPage() {
                 ))}
                 <div className="flex justify-between border-t border-cream/15 pt-2 text-base font-black"><span>Client paie</span><span className="tabular-nums text-ambre">{euro(exampleTotal)}</span></div>
                 <div className="flex justify-between text-river"><span>→ Livreur ({cfg.courierSharePercent} %)</span><span className="tabular-nums font-bold">{euro(exampleFee.courierShare)}</span></div>
-                <div className="flex justify-between text-vermillon"><span>→ Plateforme</span><span className="tabular-nums font-bold">{euro(exampleFee.platformShare)}</span></div>
+                <div className="flex justify-between text-vermillon"><span>→ wawangame</span><span className="tabular-nums font-bold">{euro(exampleFee.platformShare)}</span></div>
               </div>
             </div>
             <button

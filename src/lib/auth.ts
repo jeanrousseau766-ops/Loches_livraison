@@ -30,6 +30,10 @@ export function verifyPassword(password: string, stored: string): boolean {
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
+function cookieSecure(): boolean {
+  return process.env.VERCEL === "1" || process.env.COOKIE_SECURE === "1";
+}
+
 export async function createSession(userId: number): Promise<string> {
   const token = randomBytes(32).toString("hex");
   const now = Date.now();
@@ -38,6 +42,7 @@ export async function createSession(userId: number): Promise<string> {
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
+    secure: cookieSecure(),
     path: "/",
     maxAge: SESSION_TTL / 1000,
   });
@@ -48,7 +53,7 @@ export async function destroySession(): Promise<void> {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) await db.delete(sessions).where(eq(sessions.token, token));
-  jar.set(SESSION_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 });
+  jar.set(SESSION_COOKIE, "", { httpOnly: true, sameSite: "lax", secure: cookieSecure(), path: "/", maxAge: 0 });
 }
 
 export type SessionUser = typeof users.$inferSelect;
@@ -72,6 +77,20 @@ export async function requireUser(roles?: Role[]): Promise<SessionUser> {
   const u = await currentUser();
   if (!u) throw new ApiError(401, "Connexion requise.");
   if (roles && !roles.includes(u.role)) throw new ApiError(403, "Accès réservé à un autre espace.");
+  return u;
+}
+
+/** Un espace de travail n'est utilisable qu'après validation administrative. */
+export async function requireActiveUser(roles?: Role[]): Promise<SessionUser> {
+  const u = await requireUser(roles);
+  if (u.status !== "active") {
+    throw new ApiError(
+      403,
+      u.status === "pending" || u.status === "docs_required"
+        ? "Votre dossier est en cours de vérification. Cet espace sera activé après validation administrative."
+        : "Ce compte n'est pas actif. Contactez l'administration."
+    );
+  }
   return u;
 }
 

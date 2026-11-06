@@ -9,6 +9,7 @@ const SECTIONS = [
   { id: "cookies", label: "Cookies" },
   { id: "produits", label: "Produits réglementés" },
   { id: "reclamation", label: "Réclamations" },
+  { id: "wawangame", label: "Crédits & marge" },
   { id: "transport", label: "Cadre transport & social" },
 ];
 
@@ -24,9 +25,9 @@ export default function LegalPage() {
         <section id="mentions" className="card scroll-mt-24 p-6">
           <h2 className="font-display text-2xl font-black">Mentions légales</h2>
           <div className="mt-3 space-y-2 text-sm leading-relaxed text-ink-soft">
-            <p><strong className="text-ink">Éditeur :</strong> Locho SAS (structure en cours d'immatriculation — SIREN attribué avant ouverture), siège social à Loches (37600), Indre-et-Loire. Directeur de la publication : le président de Locho SAS.</p>
+            <p><strong className="text-ink">Éditeur :</strong> WawanPost — service de livraison du projet porté par la micronation <strong className="text-ink">wawangame</strong>. La structure juridique exploitante, son immatriculation et ses coordonnées définitives doivent être confirmées avant toute ouverture commerciale. Zone de lancement : Loches (37600), Indre-et-Loire.</p>
             <p><strong className="text-ink">Activité :</strong> plateforme numérique de mise en relation entre clients, commerçants locaux et livreurs indépendants, et prestation d'organisation de livraison. La plateforme n'est pas vendeuse des produits : le contrat de vente est conclu entre le client et le commerçant.</p>
-            <p><strong className="text-ink">Hébergement :</strong> infrastructure cloud européenne. Contact : contact@locho.fr — Données personnelles : privacy@locho.fr.</p>
+            <p><strong className="text-ink">Hébergement :</strong> infrastructure cloud européenne. Contact : contact@wawanpost.fr — Données personnelles : privacy@wawanpost.fr.</p>
             <p><strong className="text-ink">Avant lancement :</strong> immatriculation définitive, mentions complètes (capital, RCS Tours, TVA), assurances RC professionnelle et marchandises confiées, qualification transport confirmée auprès de la DREAL Centre-Val de Loire.</p>
           </div>
         </section>
@@ -34,7 +35,7 @@ export default function LegalPage() {
         <section id="cgv" className="card scroll-mt-24 p-6">
           <h2 className="font-display text-2xl font-black">Conditions générales (CGU / CGV)</h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-ink-soft">
-            <p><strong className="text-ink">Rôles :</strong> le commerçant est seul vendeur, responsable de la conformité, de la qualité et de la légalité de ses produits, et fixe librement ses prix. Locho est prestataire de livraison : ses revenus proviennent exclusivement des frais de livraison, sans aucune marge sur les produits.</p>
+            <p><strong className="text-ink">Rôles :</strong> le commerçant est seul vendeur, responsable de la conformité, de la qualité et de la légalité de ses produits, et fixe librement ses prix. WawanPost est prestataire de livraison : ses revenus proviennent exclusivement des frais de livraison, sans aucune marge sur les produits. La part livreur est versée au livreur ; <strong className="text-ink">100 % de la marge plateforme restante est affectée à la micronation wawangame</strong>.</p>
             <p><strong className="text-ink">Avant paiement, le client connaît :</strong> l'identité du vendeur, le prix des produits, le détail des frais de livraison (minimum, distance, suppléments urgence / horaires / catégorie, promotions), le total TTC, le délai annoncé, les modalités de paiement, d'annulation, de réclamation et de remboursement.</p>
             <p><strong className="text-ink">Horaires :</strong> livraisons tous les jours de 04h00 à 23h00. Aucune commande ne peut être créée en dehors de cette plage. L'ouverture du service ne garantit pas la présence d'un livreur à chaque instant ; chaque commerce n'est commandable que pendant ses propres horaires.</p>
             <p><strong className="text-ink">Annulation :</strong> gratuite tant que la préparation n'est pas avancée (avant remise au livreur), avec remboursement intégral. Au-delà, une réclamation est examinée par l'administration.</p>
@@ -60,7 +61,7 @@ export default function LegalPage() {
                 </tbody>
               </table>
             </div>
-            <p><strong className="text-ink">Vos droits :</strong> accès, rectification, effacement, limitation, portabilité — depuis « Mon compte » ou via privacy@locho.fr. Réponse sous 30 jours ; réclamation possible auprès de la CNIL.</p>
+            <p><strong className="text-ink">Vos droits :</strong> accès, rectification, effacement, limitation, portabilité — depuis « Mon compte » ou via privacy@wawanpost.fr. Réponse sous 30 jours ; réclamation possible auprès de la CNIL.</p>
             <p><strong className="text-ink">Sécurité :</strong> HTTPS, hachage des mots de passe, limitation des tentatives de connexion, permissions par rôle, sauvegardes régulières, journalisation des opérations administratives, protection renforcée des documents d'identité.</p>
           </div>
         </section>
@@ -97,6 +98,15 @@ export default function LegalPage() {
             l'administration, qui consulte les informations utiles, peut demander des justificatifs, enregistre sa décision et déclenche
             le remboursement éventuel. Réponse visée sous 48 h ouvrées ; médiation de la consommation disponible avant toute action contentieuse.
           </p>
+        </section>
+
+        <section id="wawangame" className="card scroll-mt-24 p-6">
+          <h2 className="font-display text-2xl font-black">Crédits & affectation de la marge</h2>
+          <div className="mt-3 space-y-2 text-sm leading-relaxed text-ink-soft">
+            <p><strong className="text-ink">WawanPost</strong> est le nom du site et du service de livraison. Il ne prélève aucune commission sur le prix des produits fixé par les commerçants.</p>
+            <p>Sur les frais de livraison payés par le client, la part du livreur lui est reversée. <strong className="text-ink">L'entièreté de la marge plateforme (100 %) est affectée à la micronation wawangame.</strong> Cette affectation est affichée dans les crédits du site, le récapitulatif de commande et le tableau financier administrateur.</p>
+            <p>En mode démonstration, les écritures sont tracées mais aucun transfert bancaire réel n'est exécuté. Avant ouverture commerciale, l'affectation des fonds devra être formalisée avec le prestataire de paiement et la structure juridique exploitante.</p>
+          </div>
         </section>
 
         <section id="transport" className="card scroll-mt-24 p-6">

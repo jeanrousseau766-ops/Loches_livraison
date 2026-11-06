@@ -60,6 +60,14 @@ export default function ComptePage() {
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <PageHead kicker="Espace client" title={<>Bonjour, {user.displayName || user.pseudo} 👋</>} sub={`Membre depuis le ${fmtDateTime(user.createdAt)} · pseudonyme @${user.pseudo}`} />
 
+      <Link href="/messagerie" className="card mb-6 flex flex-wrap items-center justify-between gap-3 p-5 transition hover:border-vermillon/50">
+        <div>
+          <p className="font-display text-lg font-black">📨 Messages & sondages</p>
+          <p className="text-sm text-ink-soft">Annonces de l'administration et consultations réservées à votre compte ou à votre catégorie.</p>
+        </div>
+        <span className="btn-soft !text-xs">Ouvrir →</span>
+      </Link>
+
       {user.role !== "client" && (
         <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 p-5">
           <p className="text-sm font-bold">Vous êtes connecté·e en tant que <Badge tone="river">{user.role}</Badge> — votre espace de travail vous attend.</p>
@@ -127,7 +135,7 @@ export default function ComptePage() {
           <Link href="/legal#confidentialite" className="underline">politique de confidentialité</Link>.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a className="btn-ghost !text-xs" href={`mailto:privacy@locho.fr?subject=Demande RGPD - ${user.pseudo}`}>Demander une copie de mes données</a>
+          <a className="btn-ghost !text-xs" href={`mailto:privacy@wawanpost.fr?subject=Demande RGPD - ${user.pseudo}`}>Demander une copie de mes données</a>
           <button onClick={() => setDelOpen(true)} className="btn-ghost !text-xs !text-danger !border-danger/30">Supprimer mon compte</button>
         </div>
       </div>

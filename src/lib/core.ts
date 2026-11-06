@@ -218,7 +218,7 @@ async function doSeed(): Promise<void> {
     return u;
   };
 
-  const admin = await mkUser(adminPseudo, "admin", "Administration Locho", {}, adminPw);
+  const admin = await mkUser(adminPseudo, "admin", "Administration WawanPost", {}, adminPw);
 
   /* Mode production : aucun compte ni commerce de démonstration,
      uniquement le compte administrateur (jamais verrouillé hors ligne). */
@@ -531,7 +531,7 @@ async function doSeed(): Promise<void> {
         { orderId: o.id, kind: "paiement", amount: itemsTotal + fee, partyRole: "client", partyId: client.id, label: `Paiement ${code} (PSP démo)`, createdAt: t0 },
         { orderId: o.id, kind: "produits_commercant", amount: itemsTotal, partyRole: "commercant", partyId: m.id, label: `Produits ${code} — prix commerçant`, createdAt: deliveredAt },
         { orderId: o.id, kind: "part_livreur", amount: fb.courierShare, partyRole: "livreur", partyId: c.id, label: `Part livreur ${code}`, createdAt: deliveredAt },
-        { orderId: o.id, kind: "part_plateforme", amount: fb.platformShare, partyRole: "plateforme", partyId: null, label: `Part plateforme ${code}`, createdAt: deliveredAt },
+        { orderId: o.id, kind: "part_plateforme", amount: fb.platformShare, partyRole: "plateforme", partyId: null, label: `Part wawangame ${code} (marge plateforme)`, createdAt: deliveredAt },
       ]);
     }
   }
@@ -554,7 +554,7 @@ async function doSeed(): Promise<void> {
     createdAt: now - 2 * 86400000,
   });
 
-  await notify(camille.id, "info", "Bienvenue sur Locho 👋", "Votre compte est prêt. Explorez les commerces de la Cité royale !");
+  await notify(camille.id, "info", "Bienvenue sur WawanPost 👋", "Votre compte est prêt. Explorez les commerces de la Cité royale !");
   await notify(yanis.id, "ok", "Dossier validé ✅", "Votre compte livreur est actif. Connectez-vous quand vous le souhaitez entre 4h et 23h.");
   await notify(hugo.id, "info", "Dossier reçu", "Votre candidature est en cours de vérification par l'administration.");
   await notify(beffroiU.id, "info", "Dossier reçu", "Votre demande d'inscription commerçant est en cours de vérification.");
@@ -563,7 +563,7 @@ async function doSeed(): Promise<void> {
     adminId: admin.id,
     action: "Initialisation",
     target: "Plateforme",
-    details: "Configuration initiale : Loches (37), service 04h–23h, répartition 70 % livreur / 30 % plateforme.",
+    details: "Configuration initiale : Loches (37), service 04h–23h, répartition 70 % livreur / 30 % wawangame (100 % de la marge plateforme affectée à la micronation wawangame).",
     createdAt: now,
   });
 

@@ -1,4 +1,4 @@
-# 🟢 Mettre Locho en ligne — GRATUITEMENT, pas à pas
+# 🟢 Mettre WawanPost en ligne — GRATUITEMENT, pas à pas
 
 > **Budget requis : 0 €.** Ni carte bancaire, ni ligne de commande, ni connaissance
 > technique. Vous allez cliquer dans des sites web, c'est tout. Comptez ~15 minutes.
@@ -144,16 +144,24 @@ aucune installation sur votre ordinateur ne sont nécessaires.
 4. Cliquez **Deploy** → patientez 1 à 2 minutes : le texte passe en vert
    **Congratulations! Your project has been deployed** 🎉
 5. Votre adresse internet s'affiche en haut : **`https://…vercel.app`**
-   → **cliquez dessus : Locho est en ligne !**
+   → **cliquez dessus : WawanPost est en ligne !**
 
 ## Étape 5 — Vérifier (1 min)
 
 - Ouvrez votre URL : vous retrouvez la **version B** (6 commerces, 33 produits).
 - **Première visite un peu lente (2–5 s) ?** C'est normal : Neon est en veille et
   se réveille. Ensuite tout est rapide.
-- Testez l'administration : **avatar en haut à droite → Se connecter** avec
-  `ADMIN_PSEUDO` / `ADMIN_PASSWORD` que vous avez choisis (et **non**
-  `admin` / `loches37`).
+- L'administration est **privée** : `/admin` redirige vers la connexion si vous n'êtes pas
+  administrateur actif. Aucun raccourci admin n'apparaît dans la navigation publique,
+  et aucun bouton de connexion démo n'est proposé. Connectez-vous avec
+  `ADMIN_PSEUDO` / `ADMIN_PASSWORD` depuis `/connexion`.
+- Les espaces livreur et commerçant ne s'activent qu'après validation du dossier ;
+  l'espace client suppose un compte créé.
+- Les boutons **Se connecter** et **Créer un compte** sont visibles sur mobile et
+  déclenchent une redirection immédiate après succès.
+- L'admin dispose d'un onglet **Messages & sondages** : message à tous, à une catégorie
+  (clients, livreurs, commerçants) ou à un compte précis ; sondages par catégorie ou globaux.
+  Les utilisateurs retrouvent messages et sondages dans **/messagerie**.
 - Teste aussi : `https://VOTRE-URL/api/health` doit afficher `{"ok":true}`.
 
 ---
@@ -193,7 +201,7 @@ les fichiers concernés) → Vercel **redéploie automatiquement** en ~1 minute.
 ## Honnêteté sur l'offre gratuite (important pour la suite)
 
 - **Vercel Hobby (gratuit)** = usage **personnel / non commercial**. Tant que le site
-  est une démo ou un projet d'étude : parfait. Le jour où Locho encaissera
+  est une démo ou un projet d'étude : parfait. Le jour où WawanPost encaissera
   réellement des clients → il faudra **Vercel Pro (20 $/mois)**, ou héberger sur un
   serveur : les fichiers `Dockerfile`, `docker-compose.yml`, `Caddyfile` sont déjà
   dans le projet (voir « Option B » plus bas).

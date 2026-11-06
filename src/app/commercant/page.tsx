@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, usePoll, toast } from "@/lib/client";
 import type { MeData, MerchantData, MerchantOrder, PublicData, PublicProduct } from "@/lib/types";
 import type { DocEntry } from "@/lib/util";
@@ -438,26 +439,12 @@ export default function CommercantPage() {
   const me = usePoll<MeData>("me", {}, 8000);
   const pub = usePoll<PublicData>("public", {}, 60000);
   const [showApply, setShowApply] = useState(false);
-  const [switching, setSwitching] = useState(false);
   const [docs, setDocs] = useState<DocEntry[]>([]);
   const u = me.data?.user;
 
   useEffect(() => {
     if (window.location.search.includes("apply")) setShowApply(true);
   }, []);
-
-  const demoLogin = async () => {
-    setSwitching(true);
-    try {
-      await api("login", { pseudo: "marcel", password: "demo1234" });
-      toast("Connecté en tant que Marcel (Chez Marcel) 🍲");
-      me.refresh();
-    } catch (e) {
-      toast((e as Error).message, "err");
-    } finally {
-      setSwitching(false);
-    }
-  };
 
   const resubmit = async () => {
     try {
@@ -477,15 +464,15 @@ export default function CommercantPage() {
         <>
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-leaf via-[#237a45] to-[#14532d] p-8 text-cream grain sm:p-12">
             <span className="absolute -right-6 -bottom-10 text-[160px] opacity-15">🏪</span>
-            <p className="relative text-[11px] font-extrabold uppercase tracking-[0.22em] text-cream/60">Espace commerçant · Loches (37)</p>
+            <p className="relative text-[11px] font-extrabold uppercase tracking-[0.22em] text-cream/60">Candidature commerçant · WawanPost · Loches (37)</p>
             <h1 className="relative mt-3 max-w-2xl font-display text-4xl font-black leading-tight sm:text-5xl">Vendez plus loin, sans céder un centime.</h1>
             <p className="relative mt-4 max-w-xl text-[15px] leading-relaxed text-cream/80">
-              Boutique, produits, prix, stocks, horaires : vous gérez tout. La plateforme ne prend aucune commission sur vos
-              produits — elle vit uniquement sur les frais de livraison payés par le client.
+              Votre boutique n'est activée qu'après vérification administrative. Ensuite, vous gérez produits, prix, stocks et horaires.
+              Aucune commission sur vos produits : WawanPost vit uniquement sur les frais de livraison, dont la marge est affectée à wawangame.
             </p>
             <div className="relative mt-6 flex flex-wrap gap-3">
               <button onClick={() => setShowApply(true)} className="btn bg-cream text-leaf hover:bg-paper">Inscrire mon commerce →</button>
-              <button onClick={demoLogin} disabled={switching} className="btn border border-cream/40 text-cream hover:bg-cream/10">{switching ? <Spinner /> : "Compte démo : marcel / demo1234"}</button>
+              <Link href="/connexion?return=/commercant" className="btn border border-cream/40 text-cream hover:bg-cream/10">J'ai déjà un compte commerçant</Link>
             </div>
             <div className="relative mt-8 grid max-w-2xl gap-3 text-[12px] font-extrabold sm:grid-cols-3">
               <span className="rounded-xl bg-cream/10 px-4 py-3">💶 100 % du prix de vos produits vous revient</span>

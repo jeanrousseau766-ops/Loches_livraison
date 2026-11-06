@@ -5,9 +5,9 @@ import "./globals.css";
 import Shell from "@/components/Shell";
 
 export const metadata: Metadata = {
-  title: "Locho — Tout Loches, livré · 04h–23h",
+  title: "WawanPost — Tout Loches, livré · 04h–23h",
   description:
-    "Plateforme de livraison universelle de Loches (37) : repas, courses, boulangerie, fleurs, cadeaux, colis. Commerces locaux, livreurs indépendants, suivi en temps réel.",
+    "WawanPost : livraison universelle à Loches (37). Repas, courses, boulangerie, fleurs, cadeaux, colis. 100 % de la marge plateforme est affectée à la micronation wawangame.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

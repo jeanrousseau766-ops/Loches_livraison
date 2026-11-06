@@ -314,14 +314,14 @@ export default function Home() {
             <h3 className="relative mt-2 font-display text-3xl font-black">Vos prix, vos règles.</h3>
             <p className="relative mt-3 max-w-sm text-sm leading-relaxed text-cream/80">
               Boutique, stocks, horaires et commandes en autonomie. Aucune commission sur vos produits :
-              la plateforme ne vit que sur les frais de livraison.
+              WawanPost ne vit que sur les frais de livraison ; 100 % de sa marge est affectée à la micronation wawangame.
             </p>
             <Link href="/commercant" className="btn relative mt-6 bg-cream text-leaf hover:bg-paper">Ouvrir ma boutique →</Link>
           </div>
         </div>
         <div className="reveal mt-8 grid gap-3 rounded-2xl border border-line bg-cream px-6 py-5 text-[12px] font-bold text-ink-soft sm:grid-cols-3">
           <span>🔒 Mots de passe hachés · HTTPS · journalisation admin · RGPD</span>
-          <span>🧾 Chaque euro tracé : commerçant, livreur, plateforme, remboursements</span>
+          <span>🧾 Chaque euro tracé : commerçant, livreur, wawangame, remboursements</span>
           <span>⚖️ Produits réglementés exclus du catalogue — <Link href="/legal#produits" className="underline">voir la liste</Link></span>
         </div>
       </section>

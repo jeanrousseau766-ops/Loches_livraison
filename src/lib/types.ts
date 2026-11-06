@@ -38,7 +38,77 @@ export interface MeData {
   courier?: CourierRow | null;
   merchant?: MerchantRow | null;
   unread: number;
+  inboxUnread?: number;
+  pollsPending?: number;
   notifications: Notif[];
+}
+
+export type Audience = "all" | "client" | "livreur" | "commercant" | "user";
+
+export interface InboxMessage {
+  id: number;
+  subject: string;
+  body: string;
+  senderName: string;
+  audience: Audience;
+  createdAt: number;
+  readAt: number | null;
+}
+
+export interface InboxPoll {
+  id: number;
+  question: string;
+  description: string;
+  options: string[];
+  audience: Audience;
+  status: "open" | "closed";
+  closesAt: number | null;
+  createdAt: number;
+  myVote: number | null;
+  totalRecipients: number;
+  totalVotes: number;
+  results: number[] | null;
+}
+
+export interface InboxData {
+  messages: InboxMessage[];
+  polls: InboxPoll[];
+}
+
+export interface DirectoryUser {
+  id: number;
+  pseudo: string;
+  displayName: string;
+  role: Role;
+  status: UserStatus;
+}
+
+export interface AdminMessageRow {
+  id: number;
+  subject: string;
+  body: string;
+  audience: Audience;
+  targetUserId: number | null;
+  targetName: string | null;
+  createdAt: number;
+  recipientCount: number;
+  readCount: number;
+}
+
+export interface AdminPollRow {
+  id: number;
+  question: string;
+  description: string;
+  options: string[];
+  audience: Audience;
+  targetUserId: number | null;
+  targetName: string | null;
+  status: "open" | "closed";
+  closesAt: number | null;
+  createdAt: number;
+  recipientCount: number;
+  voteCount: number;
+  results: number[];
 }
 
 export interface PublicMerchant {
@@ -331,4 +401,9 @@ export interface AdminData {
   payouts: (PayoutRow & { courierName: string })[];
   logs: { id: number; adminId: number; action: string; target: string; details: string; createdAt: number }[];
   onlineCouriersForReassign: { id: number; name: string; remaining: number; vehicle: string }[];
+  directory: DirectoryUser[];
+  community: {
+    messages: AdminMessageRow[];
+    polls: AdminPollRow[];
+  };
 }

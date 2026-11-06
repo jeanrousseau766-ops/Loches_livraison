@@ -19,6 +19,7 @@ import { DatabaseConfigurationError } from "@/db";
 import { ensureSeed, getConfig, sectorStats, activeCounts } from "@/lib/core";
 import { maybeTick } from "@/lib/engine";
 import { ACTIVE_STATUSES, merchantOpen, serviceOpen, VEHICLES } from "@/lib/util";
+import { getInbox, getInboxCounts, getAdminCommunity } from "@/lib/community";
 
 export const dynamic = "force-dynamic";
 
@@ -105,16 +106,22 @@ export async function GET(req: NextRequest) {
         me.role === "commercant"
           ? (await db.select().from(merchants).where(eq(merchants.userId, me.id)).limit(1))[0] ?? null
           : null;
+      const counts = await getInboxCounts(me.id);
       return Response.json({
         user: safeUser(me),
         courier,
         merchant,
         unread: notifs.filter((n) => !n.read).length,
+        ...counts,
         notifications: notifs,
       });
     }
 
     if (!me) throw new ApiError(401, "Connexion requise.");
+
+    if (scope === "inbox") {
+      return Response.json(await getInbox(me.id));
+    }
 
     if (scope === "client") {
       const my = await db
@@ -190,6 +197,7 @@ export async function GET(req: NextRequest) {
 
     if (scope === "courier") {
       if (me.role !== "livreur") throw new ApiError(403, "Espace réservé aux livreurs.");
+      if (me.status !== "active") throw new ApiError(403, "Espace livreur activé après validation administrative du dossier.");
       const c = (await db.select().from(couriers).where(eq(couriers.userId, me.id)).limit(1))[0];
       if (!c) throw new ApiError(404, "Profil livreur introuvable.");
       const cfg = await getConfig();
@@ -273,6 +281,7 @@ export async function GET(req: NextRequest) {
 
     if (scope === "merchant") {
       if (me.role !== "commercant") throw new ApiError(403, "Espace réservé aux commerçants.");
+      if (me.status !== "active") throw new ApiError(403, "Espace commerçant activé après validation administrative du dossier.");
       const m = (await db.select().from(merchants).where(eq(merchants.userId, me.id)).limit(1))[0];
       if (!m) throw new ApiError(404, "Boutique introuvable.");
       const prods = await db
@@ -318,7 +327,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (scope === "admin") {
-      if (me.role !== "admin") throw new ApiError(403, "Espace réservé à l'administration.");
+      if (me.role !== "admin" || me.status !== "active") throw new ApiError(403, "Espace réservé à l'administration.");
       const cfg = await getConfig();
       const us = await db.select().from(users);
       const ms = await db.select().from(merchants);
@@ -460,6 +469,7 @@ export async function GET(req: NextRequest) {
             vehicle: VEHICLES[c.vehicle]?.label ?? c.vehicle,
           })),
         deliveredRecent: delivered.length,
+        ...(await getAdminCommunity()),
       });
     }
 

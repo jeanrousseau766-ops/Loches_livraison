@@ -124,7 +124,7 @@ export async function deliverOrder(o: Order, c?: Courier): Promise<void> {
   await db.insert(transactions).values([
     { orderId: o.id, kind: "produits_commercant", amount: o.itemsTotal, partyRole: "commercant", partyId: o.merchantId, label: `Produits ${o.code} — prix commerçant`, createdAt: now },
     { orderId: o.id, kind: "part_livreur", amount: courierShare, partyRole: "livreur", partyId: o.courierId, label: `Part livreur ${o.code}`, createdAt: now },
-    { orderId: o.id, kind: "part_plateforme", amount: platformShare, partyRole: "plateforme", partyId: null, label: `Part plateforme ${o.code}`, createdAt: now },
+    { orderId: o.id, kind: "part_plateforme", amount: platformShare, partyRole: "plateforme", partyId: null, label: `Part wawangame ${o.code} (marge plateforme)`, createdAt: now },
   ]);
   await notify(o.clientId, "ok", "Commande livrée 🎉", `La commande ${o.code} a été livrée. Merci et à très vite !`, o.id);
   if (c) {
